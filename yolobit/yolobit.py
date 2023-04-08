@@ -60,11 +60,11 @@ def processData(data):
     elif cmd == 'D':
       aiot_lcd1602.move_to(0, 0)
       aiot_lcd1602.putstr(payload)
-    elif cmd == 'R':
-      if payload == '0':
-        pin14.write_digital(0)
-      elif payload == '1':
-        pin14.write_digital(1)
+    # elif cmd == 'R':
+    #   if payload == '0':
+    #     pin14.write_digital(0)
+    #   elif payload == '1':
+    #     pin14.write_digital(1)
 
 def on_event_timer_callback_K_Q_C_m_O():
   global mess

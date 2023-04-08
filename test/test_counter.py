@@ -1,13 +1,12 @@
 import unittest
-from utils import *
+from utils import Counter
 
-
-class TestUnit(unittest.TestCase):
-  def test_counter_1(self):
+class TestCounter(unittest.TestCase):
+  def test_update_1(self):
     mock_counter = Counter(15)
     self.assertEqual(mock_counter.update(), False)
   
-  def test_counter_2(self):
+  def test_update_2(self):
     mock_counter = Counter(1)
     self.assertEqual(mock_counter.update(), True)
 

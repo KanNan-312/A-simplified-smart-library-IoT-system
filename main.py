@@ -1,17 +1,35 @@
-from controller.gateway_controller import GatewayController
-import logging, argparse
+from controller import GatewayController
+from model import MaskDetector, GatewayModel
+from view import Dashboard
+
+import argparse
 import sys
 
 adafruit_json_key = "adafruit_key.json"
-sleep = 1 # number of seconds between two sensor data readings.
+
 # ai model config
 ai_weights = "model/mask_detection/weights/keras_model.h5"
 ai_labels = "model/mask_detection/weights/labels.txt"
-ai_skip = 30 # the number of iterations between two AI inferences
+
+# frequecies
+ai_freq = 20 # the number of iterations between two AI inferences
+sensor_freq = 20
+status_freq = 10
+sleep = 1 # number of seconds between two sensor data readings.
+
+# last will
+will = "This is my last will message"
+
 
 def main():
-  controller = GatewayController(adafruit_json_key, ai_weights, ai_labels, ai_skip, sleep)
-  controller.run()
+  try:
+    app = Dashboard()
+    model = GatewayModel(adafruit_json_key, ai_weights, ai_labels)
+    controller = GatewayController(app, model, ai_freq, sensor_freq, status_freq, sleep, will)
+    controller.start()
+    app.run()
+  except KeyboardInterrupt:
+    sys.exit(1)
 
 if __name__ == '__main__':
   main()
