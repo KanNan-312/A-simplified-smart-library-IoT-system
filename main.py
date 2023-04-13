@@ -12,9 +12,9 @@ ai_weights = "model/mask_detection/weights/keras_model.h5"
 ai_labels = "model/mask_detection/weights/labels.txt"
 
 # frequecies
-ai_freq = 20 # the number of iterations between two AI inferences
+ai_freq = 5000 # the number of iterations between two AI inferences
 sensor_freq = 20
-status_freq = 10
+status_freq = 20
 sleep = 1 # number of seconds between two sensor data readings.
 
 # last will

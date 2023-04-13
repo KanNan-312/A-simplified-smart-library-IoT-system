@@ -39,14 +39,10 @@ class GatewayController(threading.Thread):
     # for stop and wait protocol
     self.resend = 2
     self.timeout = 5
-
+    self.server_ack = threading.Event()
+    self.uart_ack = threading.Event()
     self.waiting_from_server = False
     self.waiting_from_uart = False
-    self.payload_sent = None
-    self.feed_id_sent = None
-    self.uart_request_sent = None
-    self.num_resent_server = 0
-    self.num_resent_uart = 0
 
     # last will message
     self.will = will
@@ -97,35 +93,51 @@ class GatewayController(threading.Thread):
 
   # send data to server using the stop and wait protocol
   def send_message_to_server(self, feed_id, payload):
-    if self.waiting_from_server:
-      logging.debug("Waiting for server response from previous message")
-      return
-
-    logging.info(f"Sending data to server: {feed_id}, {payload}")
+    logging.debug(f"Sending data to server: {feed_id}, {payload}")
     # append "gate way" prefix to the payload
     payload = "gw:" + payload
     self.client.publish(feed_id, payload)
-    # for error controller
     self.waiting_from_server = True
-    self.server_counter = Counter(self.timeout)
-    self.payload_sent = payload
-    self.feed_id_sent = feed_id
-    self.num_resent_server = 0
+    self.server_ack.wait(self.timeout)
 
-
+    num_resent = 0
+    while not self.server_ack.isSet() and num_resent < self.resend:
+      logging.debug("Resending data to server ...")
+      self.client.publish(feed_id, payload)
+      num_resent += 1
+      self.server_ack.wait(self.timeout)
+    
+    if not self.server_ack.isSet():
+      logging.debug("Data rejected due to timeout ...")
+    
+    # reset flags
+    self.waiting_from_server = False
+    self.server_ack.clear()
 
   # send data to mcu
   def send_message_to_mcu(self, request):
-    if self.waiting_from_uart:
-      logging.debug("Previous message is sending to MCU")
-      return
-    
-    logging.info(f"Sending request to MCU: {request}")
+    success = True
+    logging.debug(f"Sending request to MCU: {request}")
     self.ser.write_data(request)
     self.waiting_from_uart = True
-    self.uart_request_sent = request
-    self.uart_counter = Counter(self.timeout)
-    self.num_resent_uart = 0
+    self.uart_ack.wait(self.timeout)
+
+    num_resent = 0
+    while not self.uart_ack.isSet() and num_resent < self.resend:
+      logging.debug("Resending request to MCU ...")
+      self.ser.write_data(request)
+      num_resent += 1
+      self.uart_ack.wait(self.timeout)
+    
+    if not self.uart_ack.isSet():
+      logging.debug("Request rejected due to timeout ...")
+      success = False
+
+    # reset flags
+    self.waiting_from_uart = False
+    self.uart_ack.clear()
+
+    return success
 
   # process message from server
   def process_server_message(self, feed_id, payload):
@@ -133,8 +145,7 @@ class GatewayController(threading.Thread):
     header, payload = payload.split(':')
     # if message is from gw, update ACK flag
     if header == "gw" and self.waiting_from_server:
-      self.waiting_from_server = False
-      logging.info(f"Received response from server: {feed_id}")
+      self.server_ack.set()
     
     # if message if from the app, send ACK and process
     elif header == "app":
@@ -146,14 +157,14 @@ class GatewayController(threading.Thread):
         if feed_id == "iot.led":
           uart_request = f"L:{payload}"
           # send request to MCU and update dashboard
-          self.send_message_to_mcu(uart_request)
-          self.app.update_LED(payload)
+          if self.send_message_to_mcu(uart_request):
+            self.app.update_LED(payload)
 
         elif feed_id == "iot.fan":
           uart_request = f"F:{int(payload) * 33}"
           # send request to MCU and update dashboard
-          self.send_message_to_mcu(uart_request)
-          self.app.update_fan(payload)
+          if self.send_message_to_mcu(uart_request):
+            self.app.update_fan(payload)
         
         elif feed_id == "iot.frequency":
           self.sensor_counter = Counter(n=int(payload))
@@ -163,8 +174,7 @@ class GatewayController(threading.Thread):
     logging.debug(f"Received message from MCU: {data}")
     if data == "ACK" and self.waiting_from_uart:
       # receive ACK message from MCU
-      self.waiting_from_uart = False
-      logger.info(f"Received response from MCU")
+      self.uart_ack.set()
     else:
       _, cmd, payload = data.split(':')
       # send ACK to MCU when sensor data is received
@@ -202,7 +212,7 @@ class GatewayController(threading.Thread):
   def run(self):
     # main thread loop
     while True:
-      try:
+      try:        
         # update status to server
         if self.status_counter.update():
           self.send_message_to_server("iot.connection", "live_on")
@@ -217,30 +227,6 @@ class GatewayController(threading.Thread):
         if self.ai_counter.update():
           self.AI_inference()
         
-        # one-hop error controller for server
-        if self.waiting_from_server:
-          # if timeout, resend
-          if self.server_counter.update():
-            if self.num_resent_server < self.resend:
-              self.num_resent_server += 1
-              self.client.publish(self.feed_id_sent, self.payload_sent)
-              logging.info(f"Resending message to server: {self.num_resent_server}")
-            else:
-              self.waiting_from_server = False
-              logging.info("Sending to server rejected due to timeout")
-        
-        # one hop error controller for MCU
-        if self.waiting_from_uart:
-          # if timeout, resend
-          if self.uart_counter.update():
-            if self.num_resent_uart < self.resend:
-              self.num_resent_uart += 1
-              self.ser.write_data(self.uart_request_sent)
-              logging.info(f"Resending message to uart: {self.num_resent_uart}")
-            else:
-              self.waiting_from_uart = False
-              logging.info("Sending to uart rejected due to timeout")
-
         # sleep a while
         time.sleep(self.sleep)
       

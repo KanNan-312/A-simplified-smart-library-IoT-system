@@ -15,12 +15,10 @@ event_manager.reset()
 
 # global variable
 mess = ""
-waiting_from_gateway = False
+ack = False
 resend = 2
 num_resent = 0
 timeout = 3
-data_sent = None
-count = 0
 
 def read_terminal_input():
   spoll=uselect.poll()        # Set up an input polling object.
@@ -41,10 +39,11 @@ tiny_rgb = RGBLed(pin1.pin, 4)
 aiot_lcd1602 = LCD1602()
 
 def processData(data):
-  global waiting_from_gateway
+  global ack
+
   # gateway response ACK
-  if "ACK" in data and waiting_from_gateway:
-    waiting_from_gateway = False
+  if "ACK" in data:
+    ack = True
   # gateway request
   else:
     print("!ACK# ")
@@ -81,13 +80,20 @@ def on_event_timer_callback_K_Q_C_m_O():
 event_manager.add_timer_event(2000, on_event_timer_callback_K_Q_C_m_O)
 
 def sendDataToGateway(data):
-  global count, resend, waiting_from_gateway, data_sent
+  global ack, resend, num_resent, timeout
   # send data using stop and wait protocol
   print(data)
-  count = 0
-  resend = 0
-  waiting_from_gateway = True
-  data_sent = data
+  time.sleep(timeout)
+  while not ack and num_resent < resend:
+    print(data)
+    num_resent += 1
+    time.sleep(timeout)
+  
+  # if not ack:
+  #   print("Rejected ...")
+  
+  ack = False
+  num_resent = 0
   
 aiot_dht20 = DHT20(SoftI2C(scl=Pin(22), sda=Pin(21)))
 
@@ -106,17 +112,4 @@ if True:
 
 while True:
   event_manager.run()
-  if waiting_from_gateway:
-    count += 1
-    # timeout for a send
-    if count == timeout:
-      count = 0
-      # resend the data
-      if num_resent < resend:
-        num_resent += 1
-        print(data_send)
-      # max number of resend reached, reject
-      else:
-        waiting_from_gateway = False
-
   time.sleep_ms(1000)
