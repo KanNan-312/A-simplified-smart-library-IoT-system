@@ -61,10 +61,7 @@ class Dashboard():
     self.controller.app_control_fan(value)
 
   def update_LED(self, value):
-    if value == "0":
-      self.led_status.set('OFF')
-    elif value == "1":
-      self.led_status.set('ON')
+    self.led_slider.set(int(value))
 
   def update_fan(self, value):
     self.fan_slider.set(int(value))

@@ -1,12 +1,10 @@
 import serial.tools.list_ports
 import time
 import logging
-logging.basicConfig(level=logging.INFO, format='%(message)s')
 
 class SerialDataHandler:
-  def __init__(self, n_reconnect, processData):
+  def __init__(self, processData):
     self.mess = ""
-    self.n_reconnect = n_reconnect
     # set callback function for processing serial data
     self.processData = processData
 
@@ -15,21 +13,18 @@ class SerialDataHandler:
       self.ser = serial.Serial(port=self.port, baudrate=115200)
 
   def is_serial_connected(self):
-    # check if serial is still connected
-    if self.port and self.__getPort() == self.port:
-      return True
-    else:
-      # try to reconnect
-      cnt = 0
-      while not self.port and cnt < self.n_reconnect:
-        logging.debug("Trying to reconnect uart...")
-        time.sleep(1)
-        self.port = self.__getPort()
-        cnt += 1
-      # uart is reconnected
-      if self.port:
-        return True
+    # check if serial is still connected and try to reconnect
+    port = self.__getPort()
+    if not port:
+      self.port = None
       return False
+    else:
+      if self.port != self.__getPort():
+        # print('je')
+        self.port = self.__getPort()
+        self.ser = serial.Serial(port=self.port, baudrate=115200)
+      return True
+
 
   def __getPort(self):
     ports = serial.tools.list_ports.comports()
@@ -53,11 +48,25 @@ class SerialDataHandler:
       data = data.replace("#", "")
       return data
 
-  def read_serial(self, client):
+  def read_serial(self):
     bytesToRead = self.ser.inWaiting()
     if (bytesToRead > 0):
       self.mess = self.mess + self.ser.read(bytesToRead).decode("utf-8")
-      self.processData(extract_data())
+      print(self.mess)
+      data = self.extract_data()
+      if data:
+        self.processData(data)
 
   def write_data(self, data):
-    self.ser.write(str(data + "#").encode("utf-8"))
+    try:
+      self.ser.write(str("!" + data + "#").encode("utf-8"))
+    except:
+      logging.info("Detect uart disconnection...")
+      self.controller.uart_connected = False
+
+
+if __name__ == '__main__':
+  ser = SerialDataHandler(lambda x: None)
+  print(ser.port)
+  ser.write_data("jaja")
+  ser.read_serial()

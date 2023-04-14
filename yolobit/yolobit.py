@@ -15,12 +15,18 @@ event_manager.reset()
 
 # global variable
 mess = ""
-waiting_from_gateway = False
 resend = 2
-num_resent = 0
-timeout = 3
-data_sent = None
-count = 0
+timeout = 7
+
+sending_temp = False
+sending_humid = False
+num_resent_temp = 0
+num_resent_humid = 0
+
+temp_sent = None
+humid_sent = None
+temp_wait = 0
+humid_wait = 0
 
 def read_terminal_input():
   spoll=uselect.poll()        # Set up an input polling object.
@@ -41,61 +47,78 @@ tiny_rgb = RGBLed(pin1.pin, 4)
 aiot_lcd1602 = LCD1602()
 
 def processData(data):
-  global waiting_from_gateway
+  global sending_temp, sending_humid
   # gateway response ACK
-  if "ACK" in data and waiting_from_gateway:
-    waiting_from_gateway = False
+  if "ACK_T" in data:
+    if sending_temp:
+      sending_temp = False
+  elif "ACK_H" in data:
+    if sending_humid:
+      sending_humid = False
   # gateway request
   else:
-    print("!ACK# ")
     lst = data.split(':')
     cmd = lst[0]
     payload = lst[-1]
     if cmd == 'L':
+      print("!ACK# ")
       if payload == '0':
         tiny_rgb.show(0, hex_to_rgb('#000000'))
       elif payload == '1':
         tiny_rgb.show(0, hex_to_rgb('#ffffff'))
     elif cmd == 'F':
+      print("!ACK# ")
       pin2.write_analog(round(translate((int(payload)), 0, 100, 0, 1023)))
     elif cmd == 'D':
+      print("!ACK# ")
+      aiot_lcd1602.clear()
       aiot_lcd1602.move_to(0, 0)
       aiot_lcd1602.putstr(payload)
-    # elif cmd == 'R':
-    #   if payload == '0':
-    #     pin14.write_digital(0)
-    #   elif payload == '1':
-    #     pin14.write_digital(1)
 
 def on_event_timer_callback_K_Q_C_m_O():
   global mess
   a = read_terminal_input()
   mess = mess + a
-  while "#" in mess:
+  while ('!' in mess) and ("#" in mess):
+    start = mess.find('!')
     end = mess.find("#")
-    data = mess[:end]
+    data = mess[start+1:end]
     processData(data)
     mess = mess[end+1:]
 
 
-event_manager.add_timer_event(2000, on_event_timer_callback_K_Q_C_m_O)
+event_manager.add_timer_event(1000, on_event_timer_callback_K_Q_C_m_O)
 
-def sendDataToGateway(data):
-  global count, resend, waiting_from_gateway, data_sent
+def send_temp_to_gateway(temp):
+  global temp_wait, num_resent_temp, sending_temp, temp_sent
+  if sending_temp:
+    return
   # send data using stop and wait protocol
-  print(data)
-  count = 0
-  resend = 0
-  waiting_from_gateway = True
-  data_sent = data
+  print(temp)
+  temp_wait = 0
+  num_resent_temp = 0
+  sending_temp = True
+  temp_sent = temp
+
+def send_humid_to_gateway(humid):
+  global humid_wait, num_resent_humid, sending_humid, humid_sent
+  if sending_humid:
+    return
+  # send data using stop and wait protocol
+  print(humid)
+  humid_wait = 0
+  num_resent_humid = 0
+  sending_humid = True
+  humid_sent = humid
   
 aiot_dht20 = DHT20(SoftI2C(scl=Pin(22), sda=Pin(21)))
 
 def on_event_timer_callback_n_c_j_z_a():
   temperature = '!01:T:' + str(aiot_dht20.dht20_temperature()) + '# '
   humidity = '!02:H:' + str(aiot_dht20.dht20_humidity()) + '# '
-  sendDataToGateway(temperature)
-  sendDataToGateway(humidity)
+  (temperature)
+  send_temp_to_gateway(temperature)
+  send_humid_to_gateway(humidity)
 
 
 event_manager.add_timer_event(30000, on_event_timer_callback_n_c_j_z_a)
@@ -106,17 +129,33 @@ if True:
 
 while True:
   event_manager.run()
-  if waiting_from_gateway:
-    count += 1
+  # handle temperature resend
+  if sending_temp:
+    temp_wait += 1
     # timeout for a send
-    if count == timeout:
-      count = 0
+    if temp_wait == timeout:
+      temp_wait = 0
       # resend the data
-      if num_resent < resend:
-        num_resent += 1
-        print(data_send)
+      if num_resent_temp < resend:
+        num_resent_temp += 1
+        print(temp_sent)
       # max number of resend reached, reject
       else:
-        waiting_from_gateway = False
+        sending_temp = False
+    
+    # handle humidity resend
+  if sending_humid:
+    humid_wait += 1
+    # timeout for a send
+    if humid_wait == timeout:
+      humid_wait = 0
+      # resend the data
+      if num_resent_humid < resend:
+        num_resent_humid += 1
+        print(humid_sent)
+      # max number of resend reached, reject
+      else:
+        sending_humid = False
 
+  # handle humidity resend
   time.sleep_ms(1000)

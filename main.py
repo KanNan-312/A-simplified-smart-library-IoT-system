@@ -12,13 +12,13 @@ ai_weights = "model/mask_detection/weights/keras_model.h5"
 ai_labels = "model/mask_detection/weights/labels.txt"
 
 # frequecies
-ai_freq = 5000 # the number of iterations between two AI inferences
-sensor_freq = 20
+ai_freq = 60 # the number of iterations between two AI inferences
+sensor_freq = 30
 status_freq = 20
 sleep = 1 # number of seconds between two sensor data readings.
 
 # last will
-will = "This is my last will message"
+will = "This is my last will message from gateway"
 
 
 def main():
