@@ -61,16 +61,16 @@ def processData(data):
     cmd = lst[0]
     payload = lst[-1]
     if cmd == 'L':
-      print("!ACK# ")
+      print("!ACK_L# ")
       if payload == '0':
         tiny_rgb.show(0, hex_to_rgb('#000000'))
       elif payload == '1':
         tiny_rgb.show(0, hex_to_rgb('#ffffff'))
     elif cmd == 'F':
-      print("!ACK# ")
+      print("!ACK_F# ")
       pin2.write_analog(round(translate((int(payload)), 0, 100, 0, 1023)))
     elif cmd == 'D':
-      print("!ACK# ")
+      print("!ACK_D# ")
       aiot_lcd1602.clear()
       aiot_lcd1602.move_to(0, 0)
       aiot_lcd1602.putstr(payload)

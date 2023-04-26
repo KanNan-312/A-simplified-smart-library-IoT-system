@@ -9,7 +9,7 @@ logging.basicConfig(format='%(asctime)s,%(msecs)03d %(levelname)-8s [%(filename)
     level=logging.INFO)
 
 class GatewayController(threading.Thread):
-  def __init__(self, app, model, ai_freq=60, sensor_freq=30, status_freq=20, sleep=1, will=''):
+  def __init__(self, app, model, ai_recognizer, ai_freq=60, sensor_freq=30, status_freq=20, sleep=1, will='', resend=2, timeout=7):
     super().__init__()
 
     # app
@@ -22,6 +22,9 @@ class GatewayController(threading.Thread):
     self.client, self.aio_feed_ids = self.model.client, self.model.aio_feed_ids
     self.subscribed_feeds = 0
     self.__connectClient()
+
+    # ai model
+    self.ai_recognizer = ai_recognizer
 
     # create serial data handler and uart connection checker
     self.ser = SerialDataHandler(self.process_mcu_message)
@@ -47,16 +50,14 @@ class GatewayController(threading.Thread):
     self.sleep = sleep
 
     # for stop and wait protocol
-    self.resend = 2
-    self.timeout = 5
+    self.resend = resend
+    self.timeout = timeout
 
-    self.waiting_from_server = False
-    self.waiting_from_uart = False
-    self.payload_sent = None
-    self.feed_id_sent = None
-    self.uart_request_sent = None
-    self.num_resent_server = 0
-    self.num_resent_uart = 0
+    self.server_messages = []
+    self.uart_messages = []
+
+    self.server_lock = threading.Lock()
+    self.uart_lock = threading.Lock()
 
     # last will message
     self.will = will
@@ -82,31 +83,46 @@ class GatewayController(threading.Thread):
     ret, frame = self.camera.read()
     if ret:
       # make detection, update dashboard, display LCD and send result to server
-      result = self.model.mask_detect(frame)
-      self.app.update_AI(result)
+      results = self.ai_recognizer.detect(frame)
+      if len(results) == 0:
+        display = "Welcome"
+        info = "No people"
+      else:
+        name, mask = results[0]
+        remind = "Welcome to HCMUT library!" if mask else "Please wear your mask!"
+        display = f"Hi {name}! {remind}"
+        info = f"{name}, wearing mask" if mask else f"{name}, no mask"
+
+      # send message to server, update dashboard and display uart
+      self.send_message_to_server("iot.human-detect", info)
+      self.app.update_AI(info)
 
       if self.uart_connected:
-        display = "Please wear your mask" if result == "No Mask" else "Welcome"
-        self.send_message_to_mcu(f"D:{display}")
+        self.send_message_to_mcu('D', display)
 
-      self.send_message_to_server("iot.human-detect", result)
+        
 
   # send message to server using the stop and wait protocol
   def send_message_to_server(self, feed_id, payload):
-    if self.waiting_from_server:
-      logging.debug("Waiting for server response from previous message")
-      return
+    # loop through all the inwaiting message
+    for message in self.server_messages:
+      if message["feed_id"] == feed_id:
+        logging.debug(f"Previous data is being sent to server: {feed_id}")
+        return
 
     logging.info(f"Sending data to server: {feed_id}, {payload}")
     # append "gate way" prefix to the payload
     payload = "gw:" + payload
     self.client.publish(feed_id, payload)
-    # for error controller
-    self.waiting_from_server = True
-    self.server_counter = Counter(self.timeout)
-    self.payload_sent = payload
-    self.feed_id_sent = feed_id
-    self.num_resent_server = 0
+    # add a new message error controller
+    message = {
+      "feed_id": feed_id,
+      "payload": payload,
+      "counter": Counter(self.timeout),
+      "num_resent": 0
+    }
+    self.server_messages.append(message)
+
 
   # send sensor data to server when invoked
   def send_sensor_data(self):
@@ -120,18 +136,24 @@ class GatewayController(threading.Thread):
       self.send_message_to_server("iot.humidity", humid)
 
   # send data to mcu
-  def send_message_to_mcu(self, request):
-    print(self.waiting_from_uart)
-    if self.waiting_from_uart:
-      logging.debug("Previous message is sending to MCU")
-      return
+  def send_message_to_mcu(self, cmd, payload):
+    request = cmd + ':' + str(payload)
+
+    # loop through all the inwaiting message
+    for message in self.uart_messages:
+      if message["cmd"] == cmd:
+        logging.debug(f"Previous data is being sent to MCU: {cmd}")
+        return
 
     logging.info(f"Sending request to MCU: {request}")
     self.ser.write_data(request)
-    self.waiting_from_uart = True
-    self.uart_request_sent = request
-    self.uart_counter = Counter(self.timeout)
-    self.num_resent_uart = 0
+    message = {
+      "request": request,
+      "cmd": cmd,
+      "counter": Counter(self.timeout),
+      "num_resent": 0
+    }
+    self.uart_messages.append(message)
 
 
   # process message from server
@@ -141,78 +163,103 @@ class GatewayController(threading.Thread):
     header, payload = payload.split(':')
     # if message is from gw, update ACK flag
     if header == "gw":
-      if self.waiting_from_server:
-        self.waiting_from_server = False
-        logging.debug(f"Received response from server: {feed_id}")
+      # loop through the list of messages and delete the one with the same feed_id as ACK message
+      with self.server_lock:
+        message_idx = 0
+        while message_idx < len(self.server_messages):
+          message = self.server_messages[message_idx]
+          if message["feed_id"] == feed_id:
+            logging.info(f"Received ACK from server: {feed_id}")
+            del self.server_messages[message_idx]
+          else:
+            message_idx += 1
+        
     
     # if message if from the app, send ACK and process
     elif header == "app":
       # send ACK
-      self.send_message_to_server("iot.ack", "1")
+      self.client.publish("iot.ack", "gw:1")
 
       # process payload and send command to uart
       if self.uart_connected:
         if feed_id == "iot.led":
-          uart_request = f"L:{payload}"
+          cmd = 'L'
           # send request to MCU and update dashboard
-          self.send_message_to_mcu(uart_request)
+          # self.send_message_to_mcu(cmd, payload)
           self.app.update_LED(payload)
 
         elif feed_id == "iot.fan":
-          uart_request = f"F:{int(payload) * 33}"
+          cmd = 'F'
+          mcu_payload = int(payload) * 33
           # send request to MCU and update dashboard
-          self.send_message_to_mcu(uart_request)
+          # self.send_message_to_mcu(cmd, mcu_payload)
           self.app.update_fan(payload)
         
         elif feed_id == "iot.frequency":
-          logging.info(f"Sensor sending frequency set to {payload} seconds")
+          logging.info(f"Sensor sending frequency updated: {payload} seconds")
           self.sensor_counter = Counter(n=int(payload))
         
   # process uart message
   def process_mcu_message(self, data):
-    logging.info(f"Received message from MCU: {data}")
-    if data == "ACK":
-      # receive ACK message from MCU
-      if self.waiting_from_uart:
-        self.waiting_from_uart = False
-        logging.info(f"Received response from MCU")
+    logging.debug(f"Received message from MCU: {data}")
+    if "ACK" in data:
+      cmd = data.split("_")[1]
+      # loop through the list of messages and delete the one with the same cmd as the ACK message
+      with self.uart_lock:
+        message_idx = 0
+        while message_idx < len(self.uart_messages):
+          message = self.uart_messages[message_idx]
+          if message["cmd"] == cmd:
+            logging.info(f"Received ACK from MCU: {cmd}")
+            del self.uart_messages[message_idx]
+          else:
+            message_idx += 1
+
     else:
       _, cmd, payload = data.split(':')
 
       # update temperature and discard the out of range value, also reject duplicate value
-      if cmd == "T" and is_valid_sensor_value("T", payload) and payload != self.sensor_states["temperature"]:
-        logging.info(f"Temperature read: {payload}")
-        # send ACK to MCU and update dashboard temperature
-        self.ser.write_data("ACK_T")
-        self.app.update_temperature(payload)
+      if cmd == "T":
+        if is_valid_sensor_value("T", payload) and payload != self.sensor_states["temperature"]:
+          logging.debug(f"Temperature read: {payload}")
+          # send ACK to MCU and update dashboard temperature
+          self.ser.write_data("ACK_T")
+          self.app.update_temperature(payload)
         
-        # update temperature state to send to server later
-        self.sensor_states["temperature"] = payload
+          # update temperature state to send to server later
+          self.sensor_states["temperature"] = payload
+
+        elif not is_valid_sensor_value("T", payload):
+          logging.debug(f"Temperature value {payload} out of range. Reject")
         
 
       # update humidity and discard the out of range value, also reject the duplicate values
-      elif cmd == "H" and is_valid_sensor_value("H", payload) and payload != self.sensor_states["humidity"]:
-        logging.info(f"Humidity read: {payload}")
-        # send ACK to MCU and update dashboard temperature
-        self.ser.write_data("ACK_H")
-        self.app.update_humidity(payload)
+      elif cmd == "H":
+        if is_valid_sensor_value("H", payload) and payload != self.sensor_states["humidity"]:
+          logging.debug(f"Humidity read: {payload}")
+          # send ACK to MCU and update dashboard temperature
+          self.ser.write_data("ACK_H")
+          self.app.update_humidity(payload)
 
-        # update humidity state to send to server later
-        self.sensor_states["humidity"] = payload
+          # update humidity state to send to server later
+          self.sensor_states["humidity"] = payload
+        
+        elif not is_valid_sensor_value("H", payload):
+          logging.debug(f"Humidity value {payload} out of range. Reject")
 
   def app_control_LED(self, value):
-    uart_request = f"L:{value}"
     # send request to MCU and server
     if self.uart_connected:
-      self.send_message_to_mcu(uart_request)
+      self.send_message_to_mcu('L', value)
 
     self.send_message_to_server("iot.led", str(value))
   
   def app_control_fan(self, value):
-    uart_request = f"F:{int(value) * 33}"
+    mcu_payload = int(value) * 33
     # send request to MCU and server
     if self.uart_connected:
-      self.send_message_to_mcu(uart_request)
+      print('Control fan:', value)
+      self.send_message_to_mcu('F', mcu_payload)
 
     self.send_message_to_server("iot.fan", str(value))
   
@@ -242,6 +289,48 @@ class GatewayController(threading.Thread):
           self.send_message_to_server("iot.connection", "uart_off")
           self.uart_status_sent = True
 
+  def control_server_messages(self):
+    # one-hop error controller for all the inwaiting server messages
+    with self.server_lock:
+      message_idx = 0
+      while message_idx < len(self.server_messages):
+        message = self.server_messages[message_idx]
+        # if timeout, resend
+        if message["counter"].update():
+          if message["num_resent"] < self.resend:
+            message["num_resent"] += 1
+            logging.debug(f"Resending message to server {message['num_resent']}th time: {message['feed_id']}")
+            self.client.publish(message["feed_id"], message["payload"])
+            message_idx += 1
+
+          # reject the message due to timeout
+          else:
+            logging.info(f"Sending to server rejected due to timeout: {message['feed_id']}")
+            del self.server_messages[message_idx]
+        else:
+          message_idx += 1
+
+  def control_mcu_messages(self):
+    # one-hop error controller for all the inwaiting mcu messages
+    with self.uart_lock:
+      message_idx = 0
+      while message_idx < len(self.uart_messages):
+        message = self.uart_messages[message_idx]
+        # if timeout, resend
+        if message["counter"].update():
+          if message["num_resent"] < self.resend and self.uart_connected:
+            message["num_resent"] += 1
+            logging.debug(f"Resending message to MCU {message['num_resent']}th time: {message['cmd']}")
+            self.ser.write_data(message["request"])
+            message_idx += 1
+
+          # reject the message due to timeout
+          else:
+            logging.info(f"Sending to uart rejected due to timeout: {message['cmd']}")
+            del self.uart_messages[message_idx]
+        else:
+          message_idx += 1
+
   def run(self):
     # main thread loop
     while True:
@@ -261,7 +350,7 @@ class GatewayController(threading.Thread):
             self.ser.read_serial()
           except Exception as e:
             print(e)
-            logging.info("Detect uart disconnection")
+            logging.debug("Detect uart disconnection")
             self.uart_connected = False
         
         # send sensor data to server
@@ -272,30 +361,11 @@ class GatewayController(threading.Thread):
         if self.ai_counter.update():
           self.AI_inference()
         
-        # one-hop error controller for server
-        if self.waiting_from_server:
-          # if timeout, resend
-          if self.server_counter.update():
-            if self.num_resent_server < self.resend:
-              self.num_resent_server += 1
-              self.client.publish(self.feed_id_sent, self.payload_sent)
-              logging.info(f"Resending message to server: {self.num_resent_server}")
-            else:
-              self.waiting_from_server = False
-              logging.info("Sending to server rejected due to timeout")
+        # one-hop error controller for all the inwaiting server messages
+        self.control_server_messages()
         
         # one hop error controller for MCU
-        if self.waiting_from_uart:
-          # if timeout, resend
-          if self.uart_counter.update():
-            if self.num_resent_uart < self.resend and self.uart_connected:
-              self.num_resent_uart += 1
-              logging.info(f"Resending message to MCU: {self.num_resent_uart}")
-              self.ser.write_data(self.uart_request_sent)
-
-            else:
-              self.waiting_from_uart = False
-              logging.info("Sending to uart rejected due to timeout")
+        self.control_mcu_messages()
 
         # sleep a while
         time.sleep(self.sleep)

@@ -11,6 +11,8 @@ class SerialDataHandler:
     self.port = self.__getPort()
     if self.port:
       self.ser = serial.Serial(port=self.port, baudrate=115200)
+    else:
+      self.ser = None
 
   def is_serial_connected(self):
     # check if serial is still connected and try to reconnect
@@ -52,13 +54,14 @@ class SerialDataHandler:
     bytesToRead = self.ser.inWaiting()
     if (bytesToRead > 0):
       self.mess = self.mess + self.ser.read(bytesToRead).decode("utf-8")
-      print(self.mess)
+      # print(self.mess)
       data = self.extract_data()
       if data:
         self.processData(data)
 
   def write_data(self, data):
     try:
+      # print(str("!" + data + "#").encode("utf-8"))
       self.ser.write(str("!" + data + "#").encode("utf-8"))
     except:
       logging.info("Detect uart disconnection...")
@@ -68,5 +71,5 @@ class SerialDataHandler:
 if __name__ == '__main__':
   ser = SerialDataHandler(lambda x: None)
   print(ser.port)
-  ser.write_data("jaja")
+  # ser.write_data("jaja")
   ser.read_serial()
