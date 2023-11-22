@@ -37,7 +37,9 @@ As I am not an expert in Android development, I cannot provide details about the
 2. Load the project from the app folder.
 
 ## AI face mask detector
-We also provide the code for FaceID detection. If you want to build your own database, replace the folder [database](model/face_mask_recognition/database). Your name and your mask status (wearing mask or not) will be displayed in the LCD screen when you run the whole system.
+We also provide the code for FaceID detection. If you want to build your own database, replace the folder [database](model/face_mask_recognition/database). Then run the file [build_database.py](model/face_mask_recognition/built_database.py)
+
+Your name and your mask status (wearing mask or not) will be displayed in the LCD screen when you run the whole system.
 
 
 
