@@ -1,0 +1,7 @@
+com.example.demoiot.test.app-jetified-annotation-experimental-1.3.0-0 /Users/lap15741/.gradle/caches/transforms-3/9c93c0208ca51e60d003bcd86a7f4e2d/transformed/jetified-annotation-experimental-1.3.0/res
+com.example.demoiot.test.app-jetified-core-1.5.0-1 /Users/lap15741/.gradle/caches/transforms-3/ce699b31d3289b6ef35fe6e15a29ea66/transformed/jetified-core-1.5.0/res
+com.example.demoiot.test.app-androidTest-2 /Users/lap15741/BK/222/IoT/hcmut-co3037/app/build/generated/res/resValues/androidTest/debug
+com.example.demoiot.test.app-androidTest-3 /Users/lap15741/BK/222/IoT/hcmut-co3037/app/build/generated/res/rs/androidTest/debug
+com.example.demoiot.test.app-mergeDebugAndroidTestResources-4 /Users/lap15741/BK/222/IoT/hcmut-co3037/app/build/intermediates/incremental/debugAndroidTest/mergeDebugAndroidTestResources/merged.dir
+com.example.demoiot.test.app-mergeDebugAndroidTestResources-5 /Users/lap15741/BK/222/IoT/hcmut-co3037/app/build/intermediates/incremental/debugAndroidTest/mergeDebugAndroidTestResources/stripped.dir
+com.example.demoiot.test.app-merged_res-6 /Users/lap15741/BK/222/IoT/hcmut-co3037/app/build/intermediates/merged_res/debugAndroidTest

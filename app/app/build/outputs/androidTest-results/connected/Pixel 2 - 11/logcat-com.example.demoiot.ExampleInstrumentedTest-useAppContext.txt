@@ -1,0 +1,2 @@
+04-15 10:19:40.132 25134 25156 I TestRunner: started: useAppContext(com.example.demoiot.ExampleInstrumentedTest)
+04-15 10:19:40.138 25134 25156 I TestRunner: finished: useAppContext(com.example.demoiot.ExampleInstrumentedTest)

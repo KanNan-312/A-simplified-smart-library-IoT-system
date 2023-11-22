@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">Demo Iot</string>
+    <string-array name="options_array">
+        <item>30s</item>
+        <item>1m</item>
+        <item>2m</item>
+        <item>5m</item>
+    </string-array>
+</resources>

@@ -1,0 +1,59 @@
+# 2023-04-15T03:19:41.468Z:
+test_suite_meta_data {
+  scheduled_test_case_count: 1
+}
+test_status: PASSED
+test_result {
+  test_case {
+    test_class: "ExampleInstrumentedTest"
+    test_package: "com.example.demoiot"
+    test_method: "useAppContext"
+    start_time {
+      seconds: 1681528780
+      nanos: 371000000
+    }
+    end_time {
+      seconds: 1681528780
+      nanos: 396000000
+    }
+  }
+  test_status: PASSED
+  output_artifact {
+    label {
+      label: "device-info"
+      namespace: "android"
+    }
+    source_path {
+      path: "/Users/lap15741/BK/222/IoT/hcmut-co3037/app/build/outputs/androidTest-results/connected/Pixel 2 - 11/device-info.pb"
+    }
+  }
+  output_artifact {
+    label {
+      label: "device-info.meminfo"
+      namespace: "android"
+    }
+    source_path {
+      path: "/Users/lap15741/BK/222/IoT/hcmut-co3037/app/build/outputs/androidTest-results/connected/Pixel 2 - 11/meminfo"
+    }
+  }
+  output_artifact {
+    label {
+      label: "device-info.cpuinfo"
+      namespace: "android"
+    }
+    source_path {
+      path: "/Users/lap15741/BK/222/IoT/hcmut-co3037/app/build/outputs/androidTest-results/connected/Pixel 2 - 11/cpuinfo"
+    }
+  }
+}
+output_artifact {
+  label {
+    label: "test-results.log"
+    namespace: "com.google.testing.platform.runtime.android.driver.AndroidInstrumentationDriver"
+  }
+  source_path {
+    path: "/Users/lap15741/BK/222/IoT/hcmut-co3037/app/build/outputs/androidTest-results/connected/Pixel 2 - 11/testlog/test-results.log"
+  }
+  type: TEST_DATA
+  mime_type: "text/plain"
+}

@@ -1,0 +1,112 @@
+1<?xml version="1.0" encoding="utf-8"?>
+2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+3    package="com.example.demoiot"
+4    android:exported="true"
+5    android:versionCode="1"
+6    android:versionName="1.0" >
+7
+8    <uses-sdk
+9        android:minSdkVersion="21"
+9-->/Users/lap15741/BK/222/IoT/hcmut-co3037/app/src/main/AndroidManifest.xml
+10        android:targetSdkVersion="21" />
+10-->/Users/lap15741/BK/222/IoT/hcmut-co3037/app/src/main/AndroidManifest.xml
+11
+12    <uses-permission android:name="android.permission.WAKE_LOCK" />
+12-->/Users/lap15741/BK/222/IoT/hcmut-co3037/app/src/main/AndroidManifest.xml:5:5-68
+12-->/Users/lap15741/BK/222/IoT/hcmut-co3037/app/src/main/AndroidManifest.xml:5:22-65
+13    <uses-permission android:name="android.permission.INTERNET" />
+13-->/Users/lap15741/BK/222/IoT/hcmut-co3037/app/src/main/AndroidManifest.xml:6:5-67
+13-->/Users/lap15741/BK/222/IoT/hcmut-co3037/app/src/main/AndroidManifest.xml:6:22-64
+14    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+14-->/Users/lap15741/BK/222/IoT/hcmut-co3037/app/src/main/AndroidManifest.xml:8:5-76
+14-->/Users/lap15741/BK/222/IoT/hcmut-co3037/app/src/main/AndroidManifest.xml:8:22-73
+15    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+15-->/Users/lap15741/BK/222/IoT/hcmut-co3037/app/src/main/AndroidManifest.xml:9:5-79
+15-->/Users/lap15741/BK/222/IoT/hcmut-co3037/app/src/main/AndroidManifest.xml:9:22-76
+16    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+16-->/Users/lap15741/BK/222/IoT/hcmut-co3037/app/src/main/AndroidManifest.xml:10:5-76
+16-->/Users/lap15741/BK/222/IoT/hcmut-co3037/app/src/main/AndroidManifest.xml:10:22-73
+17    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+17-->/Users/lap15741/BK/222/IoT/hcmut-co3037/app/src/main/AndroidManifest.xml:11:5-81
+17-->/Users/lap15741/BK/222/IoT/hcmut-co3037/app/src/main/AndroidManifest.xml:11:22-78
+18    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+18-->/Users/lap15741/BK/222/IoT/hcmut-co3037/app/src/main/AndroidManifest.xml:12:5-79
+18-->/Users/lap15741/BK/222/IoT/hcmut-co3037/app/src/main/AndroidManifest.xml:12:22-76
+19
+20    <permission
+20-->[androidx.core:core:1.9.0] /Users/lap15741/.gradle/caches/transforms-3/ec4f76f6c0c02de8ba18086e7bd9baf5/transformed/core-1.9.0/AndroidManifest.xml:22:5-24:47
+21        android:name="com.example.demoiot.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+21-->[androidx.core:core:1.9.0] /Users/lap15741/.gradle/caches/transforms-3/ec4f76f6c0c02de8ba18086e7bd9baf5/transformed/core-1.9.0/AndroidManifest.xml:23:9-81
+22        android:protectionLevel="signature" />
+22-->[androidx.core:core:1.9.0] /Users/lap15741/.gradle/caches/transforms-3/ec4f76f6c0c02de8ba18086e7bd9baf5/transformed/core-1.9.0/AndroidManifest.xml:24:9-44
+23
+24    <uses-permission android:name="com.example.demoiot.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" />
+24-->[androidx.core:core:1.9.0] /Users/lap15741/.gradle/caches/transforms-3/ec4f76f6c0c02de8ba18086e7bd9baf5/transformed/core-1.9.0/AndroidManifest.xml:26:5-97
+24-->[androidx.core:core:1.9.0] /Users/lap15741/.gradle/caches/transforms-3/ec4f76f6c0c02de8ba18086e7bd9baf5/transformed/core-1.9.0/AndroidManifest.xml:26:22-94
+25
+26    <application
+26-->/Users/lap15741/BK/222/IoT/hcmut-co3037/app/src/main/AndroidManifest.xml:15:5-35:19
+27        android:allowBackup="true"
+27-->/Users/lap15741/BK/222/IoT/hcmut-co3037/app/src/main/AndroidManifest.xml:16:9-35
+28        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
+28-->[androidx.core:core:1.9.0] /Users/lap15741/.gradle/caches/transforms-3/ec4f76f6c0c02de8ba18086e7bd9baf5/transformed/core-1.9.0/AndroidManifest.xml:28:18-86
+29        android:dataExtractionRules="@xml/data_extraction_rules"
+29-->/Users/lap15741/BK/222/IoT/hcmut-co3037/app/src/main/AndroidManifest.xml:17:9-65
+30        android:debuggable="true"
+31        android:fullBackupContent="@xml/backup_rules"
+31-->/Users/lap15741/BK/222/IoT/hcmut-co3037/app/src/main/AndroidManifest.xml:18:9-54
+32        android:icon="@mipmap/ic_launcher"
+32-->/Users/lap15741/BK/222/IoT/hcmut-co3037/app/src/main/AndroidManifest.xml:19:9-43
+33        android:label="@string/app_name"
+33-->/Users/lap15741/BK/222/IoT/hcmut-co3037/app/src/main/AndroidManifest.xml:20:9-41
+34        android:supportsRtl="true"
+34-->/Users/lap15741/BK/222/IoT/hcmut-co3037/app/src/main/AndroidManifest.xml:21:9-35
+35        android:testOnly="true"
+36        android:theme="@style/Theme.DemoIot" >
+36-->/Users/lap15741/BK/222/IoT/hcmut-co3037/app/src/main/AndroidManifest.xml:22:9-45
+37        <activity
+37-->/Users/lap15741/BK/222/IoT/hcmut-co3037/app/src/main/AndroidManifest.xml:24:9-32:20
+38            android:name="com.example.demoiot.MQTTController"
+38-->/Users/lap15741/BK/222/IoT/hcmut-co3037/app/src/main/AndroidManifest.xml:25:13-43
+39            android:exported="true" >
+39-->/Users/lap15741/BK/222/IoT/hcmut-co3037/app/src/main/AndroidManifest.xml:26:13-36
+40            <intent-filter>
+40-->/Users/lap15741/BK/222/IoT/hcmut-co3037/app/src/main/AndroidManifest.xml:27:13-31:29
+41                <action android:name="android.intent.action.MAIN" />
+41-->/Users/lap15741/BK/222/IoT/hcmut-co3037/app/src/main/AndroidManifest.xml:28:17-69
+41-->/Users/lap15741/BK/222/IoT/hcmut-co3037/app/src/main/AndroidManifest.xml:28:25-66
+42
+43                <category android:name="android.intent.category.LAUNCHER" />
+43-->/Users/lap15741/BK/222/IoT/hcmut-co3037/app/src/main/AndroidManifest.xml:30:17-77
+43-->/Users/lap15741/BK/222/IoT/hcmut-co3037/app/src/main/AndroidManifest.xml:30:27-74
+44            </intent-filter>
+45        </activity>
+46
+47        <service android:name="org.eclipse.paho.android.service.MqttService" />
+47-->/Users/lap15741/BK/222/IoT/hcmut-co3037/app/src/main/AndroidManifest.xml:33:9-79
+47-->/Users/lap15741/BK/222/IoT/hcmut-co3037/app/src/main/AndroidManifest.xml:33:18-77
+48
+49        <provider
+49-->[androidx.emoji2:emoji2:1.2.0] /Users/lap15741/.gradle/caches/transforms-3/27ea2d1fe40306b6a6ebc7514e2ae640/transformed/jetified-emoji2-1.2.0/AndroidManifest.xml:24:9-32:20
+50            android:name="androidx.startup.InitializationProvider"
+50-->[androidx.emoji2:emoji2:1.2.0] /Users/lap15741/.gradle/caches/transforms-3/27ea2d1fe40306b6a6ebc7514e2ae640/transformed/jetified-emoji2-1.2.0/AndroidManifest.xml:25:13-67
+51            android:authorities="com.example.demoiot.androidx-startup"
+51-->[androidx.emoji2:emoji2:1.2.0] /Users/lap15741/.gradle/caches/transforms-3/27ea2d1fe40306b6a6ebc7514e2ae640/transformed/jetified-emoji2-1.2.0/AndroidManifest.xml:26:13-68
+52            android:exported="false" >
+52-->[androidx.emoji2:emoji2:1.2.0] /Users/lap15741/.gradle/caches/transforms-3/27ea2d1fe40306b6a6ebc7514e2ae640/transformed/jetified-emoji2-1.2.0/AndroidManifest.xml:27:13-37
+53            <meta-data
+53-->[androidx.emoji2:emoji2:1.2.0] /Users/lap15741/.gradle/caches/transforms-3/27ea2d1fe40306b6a6ebc7514e2ae640/transformed/jetified-emoji2-1.2.0/AndroidManifest.xml:29:13-31:52
+54                android:name="androidx.emoji2.text.EmojiCompatInitializer"
+54-->[androidx.emoji2:emoji2:1.2.0] /Users/lap15741/.gradle/caches/transforms-3/27ea2d1fe40306b6a6ebc7514e2ae640/transformed/jetified-emoji2-1.2.0/AndroidManifest.xml:30:17-75
+55                android:value="androidx.startup" />
+55-->[androidx.emoji2:emoji2:1.2.0] /Users/lap15741/.gradle/caches/transforms-3/27ea2d1fe40306b6a6ebc7514e2ae640/transformed/jetified-emoji2-1.2.0/AndroidManifest.xml:31:17-49
+56            <meta-data
+56-->[androidx.lifecycle:lifecycle-process:2.4.1] /Users/lap15741/.gradle/caches/transforms-3/1d1173f99a1313055c26367e9296308a/transformed/jetified-lifecycle-process-2.4.1/AndroidManifest.xml:31:13-33:52
+57                android:name="androidx.lifecycle.ProcessLifecycleInitializer"
+57-->[androidx.lifecycle:lifecycle-process:2.4.1] /Users/lap15741/.gradle/caches/transforms-3/1d1173f99a1313055c26367e9296308a/transformed/jetified-lifecycle-process-2.4.1/AndroidManifest.xml:32:17-78
+58                android:value="androidx.startup" />
+58-->[androidx.lifecycle:lifecycle-process:2.4.1] /Users/lap15741/.gradle/caches/transforms-3/1d1173f99a1313055c26367e9296308a/transformed/jetified-lifecycle-process-2.4.1/AndroidManifest.xml:33:17-49
+59        </provider>
+60    </application>
+61
+62</manifest>

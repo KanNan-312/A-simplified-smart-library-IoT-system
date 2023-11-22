@@ -1,5 +1,7 @@
-adafruit_key.json
+.gitignore
 IoTDemo
 mask_tracking
 deepface
 __pycache__
+model\\face_mask_recognition\\database\\khang
+model\\face_mask_recognition\\database\\phat
